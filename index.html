@@ -295,14 +295,23 @@
     payload.key = clave;
     // Sin cabecera Content-Type: se envía como text/plain y evita el preflight de CORS.
     const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-    const d = await r.json();
+    const d = await leerJson(r);
     if (!d.ok) throw new Error(d.error || 'Error desconocido.');
     return d;
   }
 
+  async function leerJson(r) {
+    const texto = await r.text();
+    try {
+      return JSON.parse(texto);
+    } catch (e) {
+      throw new Error('Apps Script respondió con una página en lugar de datos. Revisa que la implementación tenga acceso “Cualquier persona”, que la URL de config.js termine en /exec y que hayas ejecutado la función inicializar.');
+    }
+  }
+
   async function obtenerFicha(id) {
     const r = await fetch(API_URL + '?action=get&id=' + encodeURIComponent(id));
-    const d = await r.json();
+    const d = await leerJson(r);
     if (!d.ok) throw new Error(d.error || 'Error desconocido.');
     return d.ficha;
   }
