@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0B5D4B">
+<title>Fichas médicas NFC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2F5F7;
+    --surface: #FFFFFF;
+    --ink: #14202B;
+    --muted: #556674;
+    --line: #C9D3DA;
+    --rojo: #B3122B;
+    --rojo-suave: #FCECEF;
+    --verde: #0B5D4B;
+    --verde-suave: #E3F1ED;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 17px; line-height: 1.5;
+    background: var(--bg); color: var(--ink);
+  }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 16px; background: var(--verde); color: #fff;
+  }
+  header.top h1 { font-size: 18px; margin: 0; }
+  header.top button { color: #fff; border-color: rgba(255,255,255,.6); }
+  main { max-width: 640px; margin: 0 auto; padding: 20px 16px 64px; }
+  h2 { font-size: 22px; margin: 0 0 12px; }
+
+  /* Botones */
+  .btn {
+    font: inherit; font-weight: 700; cursor: pointer;
+    min-height: 44px; padding: 8px 16px; border-radius: 10px;
+    background: var(--verde); color: #fff; border: 2px solid var(--verde);
+  }
+  .btn.sec { background: transparent; color: var(--verde); }
+  .btn.texto { background: transparent; border-color: transparent; color: var(--muted); text-decoration: underline; }
+  .btn.peligro { background: transparent; border-color: transparent; color: var(--rojo); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  header.top .btn { background: transparent; }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 3px solid #000; outline-offset: 2px;
+  }
+
+  /* Formularios */
+  label, legend { display: block; font-weight: 700; margin-bottom: 4px; }
+  .campo { margin-bottom: 18px; }
+  .ayuda { color: var(--muted); font-size: 14px; margin: 2px 0 6px; font-weight: 400; }
+  input[type=text], input[type=tel], input[type=password], input[type=url], textarea {
+    width: 100%; font: inherit; font-size: 16px;
+    padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px;
+    background: var(--surface); color: var(--ink);
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  fieldset { border: 0; margin: 0 0 18px; padding: 0; }
+
+  .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+  .chips input { position: absolute; opacity: 0; pointer-events: none; }
+  .chips label {
+    margin: 0; text-align: center; padding: 10px 6px; cursor: pointer;
+    border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface);
+    font-size: 20px;
+  }
+  .chips label.largo { font-size: 15px; padding: 14px 6px; }
+  .chips input:checked + label { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+  .chips input:focus-visible + label { outline: 3px solid #000; outline-offset: 2px; }
+
+  .foto-campo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .foto-prev {
+    width: 96px; height: 96px; border-radius: 14px; object-fit: cover;
+    background: #DCE3E8; display: grid; place-items: center; color: var(--muted); font-size: 14px;
+  }
+  .foto-acciones { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  .contacto-fila {
+    border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface);
+    padding: 12px; margin-bottom: 10px;
+  }
+  .contacto-fila .par { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .contacto-fila label { font-size: 15px; }
+  .contacto-fila .pie { display: flex; justify-content: flex-end; margin-top: 4px; }
+  @media (max-width: 460px) { .contacto-fila .par { grid-template-columns: 1fr; } }
+
+  .acciones-form { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+  /* Lista */
+  .lista-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .lista-cab h2 { margin: 0; }
+  ul.fichas { list-style: none; margin: 0; padding: 0; }
+  .ficha {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 10px;
+  }
+  .ficha .fila { display: flex; align-items: center; gap: 12px; }
+  .ficha .tipo {
+    flex: none; min-width: 52px; text-align: center; padding: 6px 8px;
+    background: var(--rojo); color: #fff; border-radius: 8px; font-weight: 700; font-size: 18px;
+  }
+  .ficha .nombre { font-weight: 700; overflow-wrap: anywhere; }
+  .ficha .fecha { color: var(--muted); font-size: 14px; }
+  .ficha .botones { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 8px; }
+  .ficha .botones .btn { min-height: 40px; padding: 4px 12px; font-size: 15px; }
+  .ficha .botones a.btn { display: inline-flex; align-items: center; text-decoration: none; }
+
+  .vacio { text-align: center; padding: 40px 12px; color: var(--muted); }
+  .msg { padding: 10px 14px; border-radius: 8px; margin: 12px 0; }
+  .msg.error { background: var(--rojo-suave); color: var(--rojo); border: 1px solid var(--rojo); }
+  .msg.info { background: var(--verde-suave); color: var(--verde); border: 1px solid var(--verde); }
+
+  /* Diálogo NFC */
+  dialog {
+    border: 0; border-radius: 16px; padding: 20px; width: min(92vw, 460px);
+    background: var(--surface); color: var(--ink); font: inherit;
+  }
+  dialog::backdrop { background: rgba(20, 32, 43, .55); }
+  dialog h2 { margin-bottom: 4px; }
+  dialog .fila-btn { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  #nfcEstado { min-height: 48px; margin: 8px 0; }
+  #nfcEstado.ok { color: var(--verde); font-weight: 700; }
+  #nfcEstado.err { color: var(--rojo); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Fichas médicas NFC</h1>
+  <button type="button" class="btn sec" id="salir" hidden>Salir</button>
+</header>
+
+<main>
+  <!-- Acceso -->
+  <section id="vistaLogin">
+    <h2>Acceso de administrador</h2>
+    <form id="formLogin" autocomplete="off">
+      <div class="campo">
+        <label for="clave">Clave</label>
+        <input type="password" id="clave" required autocomplete="current-password">
+      </div>
+      <div id="loginError" class="msg error" hidden></div>
+      <button type="submit" class="btn" id="btnLogin">Entrar</button>
+    </form>
+  </section>
+
+  <!-- Lista -->
+  <section id="vistaLista" hidden>
+    <div class="lista-cab">
+      <h2>Fichas registradas</h2>
+      <button type="button" class="btn" id="btnNueva">Nueva ficha</button>
+    </div>
+    <div id="listaMsg" class="msg" hidden></div>
+    <ul class="fichas" id="listaFichas"></ul>
+  </section>
+
+  <!-- Formulario -->
+  <section id="vistaForm" hidden>
+    <h2 id="formTitulo">Nueva ficha</h2>
+    <form id="formFicha" novalidate>
+      <div class="campo">
+        <label>Foto</label>
+        <div class="foto-campo">
+          <img id="fotoPrev" class="foto-prev" alt="Vista previa de la foto" hidden>
+          <div id="fotoVacia" class="foto-prev">Sin foto</div>
+          <div class="foto-acciones">
+            <button type="button" class="btn sec" id="btnFoto">Elegir o tomar foto</button>
+            <button type="button" class="btn texto" id="btnQuitarFoto" hidden>Quitar foto</button>
+          </div>
+          <input type="file" id="fotoInput" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="nombre">Nombre completo</label>
+        <input type="text" id="nombre" required maxlength="120" autocomplete="off">
+      </div>
+
+      <fieldset>
+        <legend>Tipo de sangre</legend>
+        <div class="chips" id="chipsSangre"></div>
+      </fieldset>
+
+      <div class="campo">
+        <label for="alergiasMedicamentos">Alergias a medicamentos</label>
+        <p class="ayuda">Si no tiene, escribe “Ninguna conocida”. Un campo vacío no se acepta para evitar confusiones.</p>
+        <textarea id="alergiasMedicamentos" required maxlength="1000"></textarea>
+      </div>
+
+      <div class="campo">
+        <label for="alergias">Otras alergias</label>
+        <p class="ayuda">Alimentos, látex, picaduras, etc. Si no tiene, escribe “Ninguna conocida”.</p>
+        <textarea id="alergias" required maxlength="1000"></textarea>
+      </div>
+
+      <div class="campo">
+        <label for="tratamientos">Tratamientos en curso</label>
+        <p class="ayuda">Medicamentos con dosis, enfermedades crónicas, implantes. Si no hay, escribe “Ninguno”.</p>
+        <textarea id="tratamientos" required maxlength="1500"></textarea>
+      </div>
+
+      <fieldset>
+        <legend>Contactos de emergencia</legend>
+        <p class="ayuda">Incluye la lada o el código de país (por ejemplo +52 81 1234 5678) para que la llamada funcione desde cualquier lugar.</p>
+        <div id="contactos"></div>
+        <button type="button" class="btn sec" id="btnAgregarContacto">Agregar contacto</button>
+      </fieldset>
+
+      <div id="formError" class="msg error" hidden></div>
+      <div class="acciones-form">
+        <button type="submit" class="btn" id="btnGuardar">Guardar ficha</button>
+        <button type="button" class="btn texto" id="btnCancelar">Cancelar</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<!-- Diálogo para grabar NFC -->
+<dialog id="dlgNfc" aria-labelledby="nfcTitulo">
+  <h2 id="nfcTitulo">Grabar en NFC</h2>
+  <p id="nfcNombre" style="margin:0 0 8px;font-weight:700"></p>
+  <p class="ayuda">La etiqueta guarda solo este enlace. Los datos médicos se leen de tu Drive cada vez que se escanea, así que puedes editar la ficha sin volver a grabar.</p>
+  <label for="nfcUrl" class="ayuda" style="font-weight:700">Enlace de la ficha</label>
+  <input type="url" id="nfcUrl" readonly>
+  <div class="fila-btn">
+    <button type="button" class="btn" id="btnGrabar">Grabar en etiqueta NFC</button>
+    <button type="button" class="btn sec" id="btnCopiar">Copiar enlace</button>
+  </div>
+  <p id="nfcEstado" role="status" aria-live="polite"></p>
+  <button type="button" class="btn texto" id="btnCerrarNfc">Cerrar</button>
+</dialog>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const $ = function (s) { return document.querySelector(s); };
+  const TIPOS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Desconocido'];
+  const MAX_CONTACTOS = 5;
+
+  let clave = sessionStorage.getItem('clave') || '';
+  let edit = nuevoEstado();
+  let nfcAbort = null;
+
+  function nuevoEstado() {
+    return { id: null, foto: null, fotoNueva: false, quitarFoto: false };
+  }
+
+  /* ---------------------------- Utilidades ---------------------------- */
+
+  function el(tag, cls, txt) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;
+    return n;
+  }
+
+  function mostrarError(nodo, texto) {
+    nodo.textContent = texto;
+    nodo.hidden = !texto;
+  }
+
+  function ir(vista) {
+    ['Login', 'Lista', 'Form'].forEach(function (v) { $('#vista' + v).hidden = v !== vista; });
+    $('#salir').hidden = vista === 'Login';
+    window.scrollTo(0, 0);
+  }
+
+  function urlFicha(id) {
+    return new URL('ver.html?id=' + id, location.href).href;
+  }
+
+  function fechaCorta(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  /* ---------------------------- API ---------------------------- */
+
+  function apiConfigurada() {
+    return API_URL && API_URL.indexOf('PEGA_AQUI') === -1;
+  }
+
+  async function post(payload) {
+    payload.key = clave;
+    // Sin cabecera Content-Type: se envía como text/plain y evita el preflight de CORS.
+    const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Error desconocido.');
+    return d;
+  }
+
+  async function obtenerFicha(id) {
+    const r = await fetch(API_URL + '?action=get&id=' + encodeURIComponent(id));
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Error desconocido.');
+    return d.ficha;
+  }
+
+  /* ---------------------------- Acceso ---------------------------- */
+
+  $('#formLogin').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const err = $('#loginError');
+    mostrarError(err, '');
+    if (!apiConfigurada()) {
+      mostrarError(err, 'Falta pegar la URL de Apps Script en config.js.');
+      return;
+    }
+    clave = $('#clave').value;
+    const btn = $('#btnLogin');
+    btn.disabled = true;
+    try {
+      await post({ action: 'login' });
+      sessionStorage.setItem('clave', clave);
+      $('#clave').value = '';
+      await cargarLista();
+    } catch (ex) {
+      clave = '';
+      mostrarError(err, ex.message === 'Failed to fetch'
+        ? 'No se pudo conectar con el servidor. Revisa la URL en config.js y la implementación.'
+        : ex.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('#salir').addEventListener('click', function () {
+    clave = '';
+    sessionStorage.removeItem('clave');
+    ir('Login');
+  });
+
+  /* ---------------------------- Lista ---------------------------- */
+
+  async function cargarLista() {
+    ir('Lista');
+    const msg = $('#listaMsg');
+    const ul = $('#listaFichas');
+    ul.replaceChildren();
+    msg.className = 'msg info';
+    mostrarError(msg, 'Cargando fichas…');
+
+    try {
+      const d = await post({ action: 'list' });
+      mostrarError(msg, '');
+      if (!d.fichas.length) {
+        ul.appendChild(el('li', 'vacio', 'Aún no hay fichas. Crea la primera con “Nueva ficha”.'));
+        return;
+      }
+      d.fichas.forEach(function (f) { ul.appendChild(filaFicha(f)); });
+    } catch (ex) {
+      msg.className = 'msg error';
+      mostrarError(msg, ex.message);
+      if (/clave/i.test(ex.message)) ir('Login');
+    }
+  }
+
+  function filaFicha(f) {
+    const li = el('li', 'ficha');
+    const fila = el('div', 'fila');
+    fila.appendChild(el('span', 'tipo', f.tipoSangre === 'Desconocido' ? '?' : f.tipoSangre));
+    const info = el('div');
+    info.appendChild(el('div', 'nombre', f.nombre));
+    info.appendChild(el('div', 'fecha', 'Actualizada el ' + fechaCorta(f.actualizado)));
+    fila.appendChild(info);
+    li.appendChild(fila);
+
+    const botones = el('div', 'botones');
+    const bNfc = el('button', 'btn', 'Grabar en NFC');
+    bNfc.type = 'button';
+    bNfc.onclick = function () { abrirNfc(f.id, f.nombre); };
+
+    const bEditar = el('button', 'btn sec', 'Editar');
+    bEditar.type = 'button';
+    bEditar.onclick = function () { editarFicha(f.id); };
+
+    const bVer = el('a', 'btn sec', 'Ver');
+    bVer.href = urlFicha(f.id);
+    bVer.target = '_blank';
+    bVer.rel = 'noopener';
+
+    const bDel = el('button', 'btn peligro', 'Eliminar');
+    bDel.type = 'button';
+    bDel.onclick = function () { eliminarFicha(f); };
+
+    botones.append(bNfc, bEditar, bVer, bDel);
+    li.appendChild(botones);
+    return li;
+  }
+
+  async function eliminarFicha(f) {
+    const ok = confirm('¿Eliminar la ficha de ' + f.nombre + '?\n\nNo se puede deshacer y la etiqueta NFC dejará de mostrar información.');
+    if (!ok) return;
+    try {
+      await post({ action: 'delete', id: f.id });
+      await cargarLista();
+    } catch (ex) {
+      const msg = $('#listaMsg');
+      msg.className = 'msg error';
+      mostrarError(msg, ex.message);
+    }
+  }
+
+  $('#btnNueva').addEventListener('click', function () {
+    edit = nuevoEstado();
+    llenarForm(null);
+    ir('Form');
+  });
+
+  /* ---------------------------- Formulario ---------------------------- */
+
+  // Chips de tipo de sangre
+  (function () {
+    const cont = $('#chipsSangre');
+    TIPOS.forEach(function (t, i) {
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'tipoSangre';
+      input.id = 'ts' + i;
+      input.value = t;
+      const label = el('label', t.length > 3 ? 'largo' : '', t);
+      label.htmlFor = input.id;
+      cont.append(input, label);
+    });
+  })();
+
+  function campoTexto(etiqueta, tipo, valor, requerido, placeholder, nombre) {
+    const wrap = el('div');
+    const l = el('label', null, etiqueta);
+    const i = document.createElement('input');
+    i.type = tipo;
+    i.value = valor || '';
+    i.required = !!requerido;
+    i.maxLength = tipo === 'tel' ? 25 : 80;
+    i.dataset.campo = nombre;
+    if (placeholder) i.placeholder = placeholder;
+    if (tipo === 'tel') i.inputMode = 'tel';
+    i.autocomplete = 'off';
+    const uid = 'c' + Math.random().toString(36).slice(2, 8);
+    i.id = uid;
+    l.htmlFor = uid;
+    wrap.append(l, i);
+    return wrap;
+  }
+
+  function filaContacto(c) {
+    c = c || {};
+    const fila = el('div', 'contacto-fila');
+    fila.appendChild(campoTexto('Nombre', 'text', c.nombre, true, '', 'nombre'));
+    const par = el('div', 'par');
+    par.appendChild(campoTexto('Teléfono', 'tel', c.telefono, true, '+52 81 1234 5678', 'telefono'));
+    par.appendChild(campoTexto('Parentesco (opcional)', 'text', c.parentesco, false, 'Madre, pareja…', 'parentesco'));
+    fila.appendChild(par);
+
+    const pie = el('div', 'pie');
+    const quitar = el('button', 'btn peligro', 'Quitar contacto');
+    quitar.type = 'button';
+    quitar.onclick = function () {
+      if ($('#contactos').children.length > 1) {
+        fila.remove();
+        actualizarBotonContacto();
+      }
+    };
+    pie.appendChild(quitar);
+    fila.appendChild(pie);
+    return fila;
+  }
+
+  function actualizarBotonContacto() {
+    const n = $('#contactos').children.length;
+    $('#btnAgregarContacto').hidden = n >= MAX_CONTACTOS;
+    Array.from($('#contactos').querySelectorAll('.pie')).forEach(function (p) { p.hidden = n <= 1; });
+  }
+
+  $('#btnAgregarContacto').addEventListener('click', function () {
+    $('#contactos').appendChild(filaContacto());
+    actualizarBotonContacto();
+  });
+
+  function llenarForm(f) {
+    f = f || {};
+    $('#formTitulo').textContent = f.id ? 'Editar ficha' : 'Nueva ficha';
+    $('#nombre').value = f.nombre || '';
+    $('#alergiasMedicamentos').value = f.alergiasMedicamentos || '';
+    $('#alergias').value = f.alergias || '';
+    $('#tratamientos').value = f.tratamientos || '';
+    document.querySelectorAll('input[name=tipoSangre]').forEach(function (r) { r.checked = r.value === f.tipoSangre; });
+
+    const cont = $('#contactos');
+    cont.replaceChildren();
+    const lista = f.contactos && f.contactos.length ? f.contactos : [{}];
+    lista.forEach(function (c) { cont.appendChild(filaContacto(c)); });
+    actualizarBotonContacto();
+
+    edit.id = f.id || null;
+    edit.foto = f.foto || null;
+    mostrarFoto();
+    mostrarError($('#formError'), '');
+  }
+
+  async function editarFicha(id) {
+    const msg = $('#listaMsg');
+    msg.className = 'msg info';
+    mostrarError(msg, 'Abriendo ficha…');
+    try {
+      const f = await obtenerFicha(id);
+      edit = nuevoEstado();
+      llenarForm(f);
+      mostrarError(msg, '');
+      ir('Form');
+    } catch (ex) {
+      msg.className = 'msg error';
+      mostrarError(msg, ex.message);
+    }
+  }
+
+  $('#btnCancelar').addEventListener('click', function () { ir('Lista'); });
+
+  /* ---------------------------- Foto ---------------------------- */
+
+  function mostrarFoto() {
+    const tiene = !!edit.foto;
+    $('#fotoPrev').hidden = !tiene;
+    $('#fotoVacia').hidden = tiene;
+    $('#btnQuitarFoto').hidden = !tiene;
+    if (tiene) $('#fotoPrev').src = edit.foto;
+  }
+
+  function reducirImagen(file, max) {
+    return new Promise(function (resolve, reject) {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = function () {
+        const s = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * s);
+        c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error('No se pudo leer la imagen.'));
+      };
+      img.src = url;
+    });
+  }
+
+  $('#btnFoto').addEventListener('click', function () { $('#fotoInput').click(); });
+
+  $('#fotoInput').addEventListener('change', async function (e) {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      edit.foto = await reducirImagen(file, 480);
+      edit.fotoNueva = true;
+      edit.quitarFoto = false;
+      mostrarFoto();
+    } catch (ex) {
+      mostrarError($('#formError'), ex.message);
+    }
+  });
+
+  $('#btnQuitarFoto').addEventListener('click', function () {
+    edit.foto = null;
+    edit.fotoNueva = false;
+    edit.quitarFoto = true;
+    mostrarFoto();
+  });
+
+  /* ---------------------------- Guardar ---------------------------- */
+
+  $('#formFicha').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const err = $('#formError');
+    mostrarError(err, '');
+
+    const tipo = document.querySelector('input[name=tipoSangre]:checked');
+    if (!tipo) {
+      mostrarError(err, 'Selecciona el tipo de sangre (o “Desconocido”).');
+      return;
+    }
+    if (!e.target.reportValidity()) return;
+
+    const contactos = Array.from($('#contactos').children).map(function (fila) {
+      const v = function (n) { return fila.querySelector('[data-campo=' + n + ']').value.trim(); };
+      return { nombre: v('nombre'), telefono: v('telefono'), parentesco: v('parentesco') };
+    });
+
+    const ficha = {
+      id: edit.id || undefined,
+      nombre: $('#nombre').value.trim(),
+      tipoSangre: tipo.value,
+      alergiasMedicamentos: $('#alergiasMedicamentos').value.trim(),
+      alergias: $('#alergias').value.trim(),
+      tratamientos: $('#tratamientos').value.trim(),
+      contactos: contactos
+    };
+
+    const payload = { action: 'save', ficha: ficha };
+    if (edit.fotoNueva) payload.foto = edit.foto;
+    if (edit.quitarFoto) payload.quitarFoto = true;
+
+    const btn = $('#btnGuardar');
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
+    try {
+      const d = await post(payload);
+      await cargarLista();
+      abrirNfc(d.id, ficha.nombre, true);
+    } catch (ex) {
+      mostrarError(err, ex.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar ficha';
+    }
+  });
+
+  /* ---------------------------- NFC ---------------------------- */
+
+  const dlg = $('#dlgNfc');
+
+  function estadoNfc(texto, clase) {
+    const n = $('#nfcEstado');
+    n.textContent = texto;
+    n.className = clase || '';
+  }
+
+  function abrirNfc(id, nombre, recienGuardada) {
+    $('#nfcTitulo').textContent = recienGuardada ? 'Ficha guardada' : 'Grabar en NFC';
+    $('#nfcNombre').textContent = nombre;
+    $('#nfcUrl').value = urlFicha(id);
+    estadoNfc('');
+    if (!('NDEFReader' in window)) {
+      estadoNfc('Este navegador no puede grabar NFC. Usa Chrome en un Android con NFC, o copia el enlace y grábalo con una app como NFC Tools.');
+    }
+    if (!dlg.open) dlg.showModal();
+  }
+
+  function cerrarNfc() {
+    if (nfcAbort) nfcAbort.abort();
+    nfcAbort = null;
+    dlg.close();
+  }
+
+  $('#btnCerrarNfc').addEventListener('click', cerrarNfc);
+  dlg.addEventListener('cancel', function () { if (nfcAbort) nfcAbort.abort(); });
+
+  $('#btnCopiar').addEventListener('click', async function () {
+    const input = $('#nfcUrl');
+    try {
+      await navigator.clipboard.writeText(input.value);
+    } catch (e) {
+      input.select();
+      document.execCommand('copy');
+    }
+    estadoNfc('Enlace copiado.', 'ok');
+  });
+
+  $('#btnGrabar').addEventListener('click', async function () {
+    if (!('NDEFReader' in window)) {
+      estadoNfc('Este navegador no puede grabar NFC. Usa Chrome en un Android con NFC, o copia el enlace y grábalo con una app como NFC Tools.', 'err');
+      return;
+    }
+    const btn = $('#btnGrabar');
+    btn.disabled = true;
+    nfcAbort = new AbortController();
+    estadoNfc('Acerca la etiqueta a la parte trasera del teléfono y mantenla quieta…');
+    try {
+      const ndef = new NDEFReader();
+      await ndef.write(
+        { records: [{ recordType: 'url', data: $('#nfcUrl').value }] },
+        { signal: nfcAbort.signal }
+      );
+      estadoNfc('Listo, la etiqueta quedó grabada. Pruébala acercándola otra vez.', 'ok');
+    } catch (ex) {
+      if (ex.name === 'AbortError') {
+        estadoNfc('Grabación cancelada.');
+      } else if (ex.name === 'NotAllowedError') {
+        estadoNfc('No hay permiso para usar NFC. Actívalo en los ajustes del teléfono y permite el acceso en el navegador.', 'err');
+      } else if (ex.name === 'NotReadableError') {
+        estadoNfc('No se pudo leer la etiqueta. Acércala de nuevo.', 'err');
+      } else if (ex.name === 'NetworkError') {
+        estadoNfc('La etiqueta no aceptó la grabación. Puede estar bloqueada o ser muy pequeña para este enlace (usa NTAG215 o mayor).', 'err');
+      } else {
+        estadoNfc('No se pudo grabar: ' + ex.message, 'err');
+      }
+    } finally {
+      nfcAbort = null;
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------------------------- Inicio ---------------------------- */
+
+  if (clave && apiConfigurada()) {
+    cargarLista();
+  } else {
+    ir('Login');
+  }
+})();
+</script>
+</body>
+</html>
